@@ -1,0 +1,12 @@
+{
+    "dbConfig": {
+      "user": "postgres",
+      "password": "!sql123",
+      "host": "localhost",
+      "port": 5432,
+      "database": "sportpit"
+    },
+    "port": 5000,
+    "jwtSecret": "lapidal"
+  }
+  
