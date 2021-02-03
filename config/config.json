@@ -4,7 +4,7 @@
       "password": "!sql123",
       "host": "localhost",
       "port": 5432,
-      "database": "sportpit"
+      "database": "helpdesk"
     },
     "port": 5000,
     "jwtSecret": "lapidal"
