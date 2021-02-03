@@ -6,7 +6,7 @@ import authController from "./controller/auth_controller.js";
 const PORT = config.port || 5000;
 const app = express();
 
-app.use(express.json({ limit: "50mb", extended: true }));
+app.use(express.json({ limit: "100mb", extended: true }));
 
 app.use(testController);
 app.use(authController);
