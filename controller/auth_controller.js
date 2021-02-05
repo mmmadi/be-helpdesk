@@ -18,18 +18,24 @@ router.post("/api/login", async (req, res) => {
       });
     }
 
-    const { fio, password } = req.body;
+    const { email, password } = req.body;
 
-    const user = await pool.query("select * from Users where fio = $1", [fio]);
+    const user = await pool.query("select * from Users where mail = $1", [
+      email,
+    ]);
 
     if (user.rowCount === 0) {
-      return res.status(400).json({ message: "Пользователь не найден" });
+      return res
+        .status(400)
+        .json({ message: "Пользователь не найден", error: true });
     }
 
     const isMatch = await bcrypt.compare(password, user.rows[0].password);
 
     if (!isMatch) {
-      return res.status(400).json({ message: "Некорректный логин или пароль" });
+      return res
+        .status(400)
+        .json({ message: "Некорректный логин или пароль", error: true });
     }
 
     const token = jwt.sign(
@@ -41,8 +47,10 @@ router.post("/api/login", async (req, res) => {
     );
 
     res.json({
+      error: false,
       token,
       userId: user.rows[0].id,
+      email: user.rows[0].mail,
       fio: user.rows[0].fio,
       id_struct: user.rows[0].id_struct,
       id_dolgnost: user.rows[0].id_dolgnost,

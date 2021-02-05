@@ -8,6 +8,13 @@ const app = express();
 
 app.use(express.json({ limit: "100mb", extended: true }));
 
+app.all("*", function (req, res, next) {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
+  res.header("Access-Control-Allow-Headers", "*");
+  next();
+});
+
 app.use(testController);
 app.use(authController);
 
