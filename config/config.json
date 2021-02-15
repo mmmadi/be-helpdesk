@@ -2,7 +2,7 @@
     "dbConfig": {
       "user": "postgres",
       "password": "!sql123",
-      "host": "localhost",
+      "host": "192.168.40.87",
       "port": 5432,
       "database": "helpdesk"
     },
