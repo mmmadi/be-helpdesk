@@ -53,7 +53,6 @@ router.post("/api/login", async (req, res) => {
       email: user.rows[0].mail,
       fio: user.rows[0].fio,
       id_struct: user.rows[0].id_struct,
-      id_dolgnost: user.rows[0].id_dolgnost,
     });
   } catch (e) {
     res.status(500).json({ message: e.message });
