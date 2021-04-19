@@ -1,25 +1,44 @@
 import fs from "fs";
 import path from "path";
 
-const __dirname = path.resolve();
+// const __dirname = path.resolve();
 
-const current_path = path.resolve(__dirname);
+// const current_path = path.resolve(__dirname);
 
-const order_dir = current_path + `/public/orders/76`;
+// const order_dir = current_path + `/public/orders/76`;
 
-const readedFiles = fs.readdirSync(order_dir);
+// const readedFiles = fs.readdirSync(order_dir);
 
-const test = [
-  { name: "passwords.txt", base64: "from order" },
-  { name: "passwords.xlsx", base64: "from order" },
-  { name: "asdasd.xlsx", base64: "asd" },
+let test = [
+  { id: 2, name: "passwords.xlsx", base64: "test" },
+  { id: 3, name: "asdasd.xlsx", base64: "test" },
+  { id: 4, name: "bkbkasdaqw.xlsx", base64: "test" },
+  { id: 1, name: "passwords.txt", base64: "test" },
 ];
 
-readedFiles
-  .filter(
-    (file) =>
-      !test
-        .map((elem) => elem.base64 === "from order" && elem.name)
-        .includes(file)
-  )
-  .forEach((x) => console.log(x.name));
+const test2 = [
+  { id: 9, name: "passwords.txt", base64: "test2" },
+  { id: 10, name: "qwewqe.xlsx", base64: "test2" },
+  { id: 12, name: "hasdasdqwe.xlsx", base64: "test2" },
+  { id: 13, name: "asgasasdasd.xlsx", base64: "test2" },
+];
+
+// test
+//   .filter((file) => test2.map((s) => s.name).includes(file.name))
+//   .forEach((c) => console.log(c));
+const asd = new Date();
+console.log(asd.toString());
+
+// const asdasd = { id: 9, name: "passwords.txt", base64: "test2" };
+// const compare = test.findIndex((file) => file.name === asdasd.name);
+// console.log(test);
+
+// const newObj = { ...test[compare], name: asdasd.name.replace(".", `${}`) };
+
+// const newArray = [
+//   ...test.slice(0, compare),
+//   newObj,
+//   ...test.slice(compare + 1),
+// ];
+
+// console.log(newArray);

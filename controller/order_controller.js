@@ -60,7 +60,9 @@ router.post("/api/create-order", async (req, res) => {
     const { form, files } = req.body;
 
     const docs = `{"files": [${files.map((file) => {
-      return '"' + file.name + '"';
+      return `{"name": ${'"' + file.name + '"'}, "hashname": ${
+        '"' + file.hashName + '"'
+      }}`;
     })}]}`;
 
     const query = await pool.query(
@@ -77,8 +79,8 @@ router.post("/api/create-order", async (req, res) => {
         new Date(),
         docs,
         form.task,
-        form.spec,
-        form.sub_spec,
+        form.spec === "" ? null : form.spec,
+        form.sub_spec === "" ? null : form.sub_spec,
       ]
     );
 
@@ -100,7 +102,7 @@ router.post("/api/create-order", async (req, res) => {
 
     files.forEach((file) => {
       fs.writeFile(
-        `${order_dir}/${file.name}`,
+        `${order_dir}/${file.hashName}`,
         file.base64,
         "base64",
         function (err) {
@@ -132,7 +134,9 @@ router.put("/api/update-order/:id", async (req, res) => {
     const { form, files } = req.body;
 
     const docs = `{"files": [${files.map((file) => {
-      return '"' + file.name + '"';
+      return `{"name": ${'"' + file.name + '"'}, "hashname": ${
+        '"' + file.hashName + '"'
+      }}`;
     })}]}`;
 
     const query = await pool.query(
@@ -177,7 +181,7 @@ router.put("/api/update-order/:id", async (req, res) => {
 
         files.forEach((file) => {
           fs.writeFile(
-            `${order_dir}/${file.name}`,
+            `${order_dir}/${file.hashName}`,
             file.base64,
             "base64",
             function (err) {
@@ -192,7 +196,7 @@ router.put("/api/update-order/:id", async (req, res) => {
           .filter(
             (file) =>
               !files
-                .map((elem) => elem.base64 === "from order" && elem.name)
+                .map((elem) => elem.base64 === "from order" && elem.hashName)
                 .includes(file)
           )
           .forEach((x) => fs.unlinkSync(path.resolve(order_dir, x)));
@@ -200,7 +204,7 @@ router.put("/api/update-order/:id", async (req, res) => {
         files.forEach((file) => {
           if (file.base64 !== "from order") {
             fs.writeFile(
-              `${order_dir}/${file.name}`,
+              `${order_dir}/${file.hashName}`,
               file.base64,
               "base64",
               function (err) {
@@ -305,6 +309,134 @@ router.post("/api/get-orders", async (req, res) => {
   }
 });
 
+router.post("/api/get-filter-orders", async (req, res) => {
+  try {
+    const { param, userId, form } = req.body;
+
+    const startDate = form.date_start.slice(0, 10) + "T00:00:00.000Z";
+    const endDate = form.date_end.slice(0, 10) + "T23:59:59.000Z";
+
+    const getTask = await pool.query(`
+      select
+          t.id
+      from Task t
+      left join users u on u.id_struct = t.struct_id
+      where u.id = ${userId}
+    `);
+
+    if (param === 1) {
+      const query = await pool.query(
+        `
+        select
+            o.*,
+            p.name as priority,
+            o.subject,
+            author.FIO as author,
+            to_char(o.date_ins, 'DD TMMonth YYYY, HH24:MI'::text) AS date_ins,
+            owner.fio as owner,
+            exec.fio as executor,
+            s.name as status,
+            t.name as task,
+            spec.name as spec,
+            sub_spec.name as sub_spec,
+            ${param} as param
+        from orders o
+        left join task t on t.id = o.task_id
+        left join status s on s.id = o.status
+        left join prioritet p on p.id = o.prioritet
+        left join users author on author.id = o.id_user_ins
+        left join users owner on owner.id = o.owner_id
+        left join users exec on exec.id = o.executor_id
+        left join spec spec on spec.id = o.spec_id
+        left join sub_spec sub_spec on sub_spec.id = o.sub_spec_id
+        where (o.task_id = ${getTask.rows[0].id} or o.owner_id = ${userId})
+          and (
+              o.date_update between '${startDate}' and '${endDate}'
+              ${
+                form.spec !== ""
+                  ? `and o.spec_id = '${form.spec}'`
+                  : `and o.id is not null`
+              }
+              ${
+                form.sub_spec !== ""
+                  ? `and o.sub_spec_id = '${form.sub_spec}'`
+                  : `and o.id is not null`
+              }
+              ${
+                form.executor !== null
+                  ? `and o.executor_id = '${form.executor}'`
+                  : `and o.id is not null`
+              }
+              ${
+                form.status !== null
+                  ? `and o.status = '${form.status}'`
+                  : `and o.id is not null`
+              }
+            )
+        order by o.date_ins
+      `
+      );
+
+      return res.status(200).json(query.rows);
+    } else {
+      const query = await pool.query(
+        `
+        select
+            o.*,
+            p.name as priority,
+            o.subject,
+            author.FIO as author,
+            to_char(o.date_ins, 'DD TMMonth YYYY, HH24:MI'::text) AS date_ins,
+            owner.fio as owner,
+            exec.fio as executor,
+            s.name as status,
+            t.name as task,
+            spec.name as spec,
+            sub_spec.name as sub_spec,
+            ${param} as param
+        from orders o
+        left join task t on t.id = o.task_id
+        left join status s on s.id = o.status
+        left join prioritet p on p.id = o.prioritet
+        left join users author on author.id = o.id_user_ins
+        left join users owner on owner.id = o.owner_id
+        left join users exec on exec.id = o.executor_id
+        left join spec spec on spec.id = o.spec_id
+        left join sub_spec sub_spec on sub_spec.id = o.sub_spec_id
+        where id_user_ins = ${userId}
+        and (
+          o.date_update between '${startDate}' and '${endDate}'
+          ${
+            form.spec !== ""
+              ? `and o.spec_id = '${form.spec}'`
+              : `and o.id is not null`
+          }
+          ${
+            form.sub_spec !== ""
+              ? `and o.sub_spec_id = '${form.sub_spec}'`
+              : `and o.id is not null`
+          }
+          ${
+            form.executor !== null
+              ? `and o.executor_id = '${form.executor}'`
+              : `and o.id is not null`
+          }
+          ${
+            form.status !== null
+              ? `and o.status = '${form.status}'`
+              : `and o.id is not null`
+          }
+        )
+        order by o.date_ins
+      `
+      );
+      return res.status(200).json(query.rows);
+    }
+  } catch (e) {
+    res.status(500).json({ message: e.message });
+  }
+});
+
 router.post("/api/get-count", async (req, res) => {
   try {
     const { userId } = req.body;
@@ -375,8 +507,13 @@ router.get("/api/get-order/:id", async (req, res) => {
               when status = 3 then true
               else false
             end as isDone,
+            case 
+              when status = 4 then true
+              else false
+            end as isCancel,
             cancel_user.fio as cancel_user,
-            inwork_user.fio as inwork_user
+            inwork_user.fio as inwork_user,
+            author.img as image
         from orders o
         left join task t on t.id = o.task_id
         left join status s on s.id = o.status
@@ -484,33 +621,38 @@ router.put("/api/take-in-work-order/:id", async (req, res) => {
   }
 });
 
-router.post("/api/cancel-order", async (req, res) => {
+router.put("/api/cancel-order/:id", async (req, res) => {
   try {
-    const { id, form, files } = req.body;
+    const { id } = req.params;
+    const { userId, param } = req.body;
 
     const getUser = await pool.query(
-      `select * from users where id = ${form.userId}`
+      `select * from users where id = ${userId}`
     );
 
-    const checkCancel = await pool.query(
-      `select count(*) from orders where id = ${id} and status = 4`
+    const getCreator = await pool.query(
+      `select * from orders where id = ${id}`
     );
 
-    if (checkCancel.rows[0].count === "1") {
-      return res.json({
-        message: "Заявка уже отменена! Обновите страницу!",
-        type: "danger",
-      });
-    }
+    if (param === 1) {
+      const checkCancel = await pool.query(
+        `select count(*) from orders where id = ${id} and status = 4`
+      );
 
-    if (!files.length && !form.comment) {
+      if (checkCancel.rows[0].count === "1") {
+        return res.json({
+          message: "Заявка уже отменена! Обновите страницу!",
+          type: "danger",
+        });
+      }
+
       const query = await pool.query(`
-        update orders
-        set status = 4, owner_id = ${form.user_ins}, executor_id = null,
-        id_user_cancel = ${form.userId}, date_cancel = now()
-        where id = ${id}
-        returning status
-      `);
+          update orders
+          set status = 4, owner_id = ${getCreator.rows[0].id_user_ins}, executor_id = null,
+          id_user_cancel = ${userId}, date_cancel = now()
+          where id = ${id}
+          returning status
+        `);
 
       if (query.rowCount === 0) {
         return res.status(400).json({
@@ -520,8 +662,8 @@ router.post("/api/cancel-order", async (req, res) => {
       }
 
       const getStatus = await pool.query(`
-        select * from status where id = ${query.rows[0].status}
-      `);
+          select * from status where id = ${query.rows[0].status}
+        `);
 
       return res.status(200).json({
         message: "Заявка отменена!",
@@ -530,48 +672,44 @@ router.post("/api/cancel-order", async (req, res) => {
         status: getStatus.rows[0].name,
         isCancel: true,
       });
-    }
+    } ///////////////////////
+    else {
+      const checkCancel = await pool.query(
+        `select count(*) from orders where id = ${id} and status = 1`
+      );
 
-    const images = `{"files": [${files.map((file) => {
-      return '"' + file.name + '"';
-    })}]}`;
+      if (checkCancel.rows[0].count === "1") {
+        return res.json({
+          message: "Заявка не отменена! Обновите страницу!",
+          type: "danger",
+        });
+      }
 
-    const commentQuery = await pool.query(
-      `
-        insert into comments (comment, files, date_ins, id_user_ins, order_id)
-        values ($1, $2, now(), $3, $4);
-      `,
-      [form.comment, images, form.userId, id]
-    );
+      const query = await pool.query(`
+          update orders
+          set status = 1, owner_id = null, id_user_cancel = null, date_cancel = null
+          where id = ${id}
+          returning status
+        `);
 
-    const orderQuery = await pool.query(
-      `
-      update orders
-        set status = 4, owner_id = ${form.user_ins}, executor_id = null,
-        id_user_cancel = ${form.userId}, date_cancel = now()
-        where id = ${id}
-        returning status
-      `
-    );
+      if (query.rowCount === 0) {
+        return res.status(400).json({
+          message: "Что-то пошло не так! Обратитесь к администратору.",
+          type: "danger",
+        });
+      }
 
-    if (orderQuery.rowCount === 0) {
-      return res.status(400).json({
-        message: "Что-то пошло не так! Обратитесь к администратору.",
-        type: "danger",
+      const getStatus = await pool.query(`
+          select * from status where id = ${query.rows[0].status}
+        `);
+
+      return res.status(200).json({
+        message: "Заявка обновлена!",
+        type: "success",
+        status: getStatus.rows[0].name,
+        isCancel: false,
       });
     }
-
-    const getStatus = await pool.query(`
-        select * from status where id = ${orderQuery.rows[0].status}
-      `);
-
-    res.status(200).json({
-      message: "Заявка отменена!",
-      type: "danger",
-      userfio: getUser.rows[0].fio,
-      status: getStatus.rows[0].name,
-      isCancel: true,
-    });
   } catch (e) {
     res.status(500).json({ message: e.message });
   }
@@ -676,7 +814,9 @@ router.post("/api/add-comment", async (req, res) => {
     const { id, form, files } = req.body;
 
     const docs = `{"files": [${files.map((file) => {
-      return '"' + file.name + '"';
+      return `{"name": ${'"' + file.name + '"'}, "hashname": ${
+        '"' + file.hashName + '"'
+      }}`;
     })}]}`;
 
     const query = await pool.query(
@@ -730,7 +870,7 @@ router.post("/api/add-comment", async (req, res) => {
 
     files.forEach((file) => {
       fs.writeFile(
-        `${comment_dir}/${file.name}`,
+        `${comment_dir}/${file.hashName}`,
         file.base64,
         "base64",
         function (err) {
@@ -761,6 +901,7 @@ router.get("/api/get-comments/:id", async (req, res) => {
         to_char(c.date_ins, 'DD TMMonth YYYY, HH24:MI'::text) AS date_ins,
         c.id_user_ins,
         u.fio,
+        u.img,
         c.order_id
       from comments c
       left join users u on u.id = c.id_user_ins

@@ -59,6 +59,7 @@ router.post("/api/login", async (req, res) => {
       fio: user.rows[0].fio,
       id_struct: user.rows[0].id_struct,
       have_task: user.rows[0].havetask,
+      userImg: user.rows[0].img,
     });
   } catch (e) {
     res.status(500).json({ message: e.message });

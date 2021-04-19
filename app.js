@@ -3,6 +3,9 @@ import config from "./config/config.json";
 import testController from "./controller/test_controller.js";
 import authController from "./controller/auth_controller.js";
 import orderController from "./controller/order_controller.js";
+import orderFilterController from "./controller/order_filter_controller.js";
+import dashboardController from "./controller/dashboard_controller.js";
+import profileController from "./controller/profile_controller.js";
 
 const PORT = config.port || 5000;
 const app = express();
@@ -20,6 +23,9 @@ app.use("/static", express.static("public"));
 app.use(testController);
 app.use(authController);
 app.use(orderController);
+app.use(orderFilterController);
+app.use(dashboardController);
+app.use(profileController);
 
 app.listen(PORT, () => {
   console.log(`Server has been started on port ${PORT}...`);
