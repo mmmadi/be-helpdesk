@@ -1,44 +1,29 @@
-import fs from "fs";
-import path from "path";
-
-// const __dirname = path.resolve();
-
-// const current_path = path.resolve(__dirname);
-
-// const order_dir = current_path + `/public/orders/76`;
-
-// const readedFiles = fs.readdirSync(order_dir);
-
-let test = [
-  { id: 2, name: "passwords.xlsx", base64: "test" },
-  { id: 3, name: "asdasd.xlsx", base64: "test" },
-  { id: 4, name: "bkbkasdaqw.xlsx", base64: "test" },
-  { id: 1, name: "passwords.txt", base64: "test" },
+const notify = [
+  { id: 1, name: "test", checked: true },
+  { id: 2, name: "test1", checked: true },
+  { id: 3, name: "test2", checked: false },
 ];
 
-const test2 = [
-  { id: 9, name: "passwords.txt", base64: "test2" },
-  { id: 10, name: "qwewqe.xlsx", base64: "test2" },
-  { id: 12, name: "hasdasdqwe.xlsx", base64: "test2" },
-  { id: 13, name: "asgasasdasd.xlsx", base64: "test2" },
+const asd = [
+  { id: 1, name: "test" },
+  { id: 2, name: "test1" },
+  { id: 3, name: "test2" },
+  { id: 4, name: "test3" },
+  { id: 5, name: "test4" },
+  { id: 6, name: "test5" },
+  { id: 7, name: "test6" },
 ];
 
-// test
-//   .filter((file) => test2.map((s) => s.name).includes(file.name))
-//   .forEach((c) => console.log(c));
-const asd = new Date();
-console.log(asd.toString());
+const newArr = [];
 
-// const asdasd = { id: 9, name: "passwords.txt", base64: "test2" };
-// const compare = test.findIndex((file) => file.name === asdasd.name);
-// console.log(test);
+asd.map((x) => {
+  const newNotify = notify.find((s) => s.id === x.id);
 
-// const newObj = { ...test[compare], name: asdasd.name.replace(".", `${}`) };
+  if (newNotify) {
+    return newArr.push({ ...x, checked: newNotify.checked });
+  } else {
+    newArr.push({ ...x, checked: false });
+  }
+});
 
-// const newArray = [
-//   ...test.slice(0, compare),
-//   newObj,
-//   ...test.slice(compare + 1),
-// ];
-
-// console.log(newArray);
+console.log(newArr);
