@@ -7,6 +7,14 @@
       "database": "helpdesk"
     },
     "port": 5000,
-    "jwtSecret": "lapidal"
+    "jwtSecret": "lapidal",
+    "authMail": {
+      "user": "m.makhatov@petroleum.com.kz",
+      "pass": "!plm001023mm"
+    },
+    "mailSettings": {
+      "smtp": "smtp.petroleum.com.kz",
+      "port": 25
+    }
   }
   

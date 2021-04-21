@@ -11,9 +11,4 @@ router.get("/api/test", async (req, res) => {
     res.json({ message: e.message });
   }
 });
-
-// router.get("/api/test", (req, res) => {
-//   return res.json({ message: "success" });
-// });
-
 export default router;

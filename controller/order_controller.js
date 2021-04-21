@@ -4,6 +4,7 @@ import path from "path";
 import fs from "fs";
 import rimraf from "rimraf";
 import pool from "../config/dbPool.js";
+import mailMiddleware from "../middleware/mailMiddleware.js";
 
 const router = Router();
 
@@ -58,6 +59,7 @@ router.post("/api/create-order", async (req, res) => {
     }
 
     const { form, files } = req.body;
+    const notifyType = "Создание заявки";
 
     const docs = `{"files": [${files.map((file) => {
       return `{"name": ${'"' + file.name + '"'}, "hashname": ${
@@ -83,6 +85,43 @@ router.post("/api/create-order", async (req, res) => {
         form.sub_spec === "" ? null : form.sub_spec,
       ]
     );
+
+    //// отправка email
+
+    const getTaskName = await pool.query(`
+      select s.name 
+      from structs s
+      left join task t on t.struct_id = s.id
+      where t.id = ${form.task}
+    `);
+
+    const getTaskEmails = await pool.query(`
+      select mail, notifications from users u 
+      left join structs s on s.id = u.id_struct 
+      left join task t on t.struct_id = s.id 
+      where t.id = ${form.task}
+    `);
+
+    const getAllowsNotify = getTaskEmails.rows.filter((user) =>
+      user.notifications.find((x) => x.name === notifyType)
+    );
+
+    const modified = getAllowsNotify.map((x) => {
+      return x["mail"];
+    });
+
+    const data = {
+      title: "Заявка создана",
+      type: "Заявка создана",
+      name: getTaskName.rows[0].name,
+      text: `К вам поступила новая заявка <br> № ${query.rows[0].id} <br> Тема: ${form.subject}`,
+      mail: modified.join(),
+      orderId: query.rows[0].id,
+    };
+
+    mailMiddleware(data);
+
+    ///////////////////
 
     if (!files.length) {
       return res
@@ -115,7 +154,7 @@ router.post("/api/create-order", async (req, res) => {
       .status(200)
       .json({ message: "Заявка добавлена!", status: 200, type: "success" });
   } catch (e) {
-    res.status(500).json({ message: e.message });
+    res.status(500).json({ message: e.message, type: "danger" });
   }
 });
 
@@ -539,8 +578,13 @@ router.put("/api/take-in-work-order/:id", async (req, res) => {
     const { id } = req.params;
     const { userId, param } = req.body;
 
+    const getUserIns = await pool.query(
+      `select * from orders where id = ${id}`
+    );
+
     ////1
     if (param === 1) {
+      const notifyType = "Взятие в работу заявки";
       const checkLock = await pool.query(`
       select count(*) from orders where id = ${id} and owner_id is null and executor_id is null and status = 1
     `);
@@ -570,6 +614,31 @@ router.put("/api/take-in-work-order/:id", async (req, res) => {
       const getUser = await pool.query(`
       select * from users where id = ${userId}
     `);
+
+      //// отправка email
+
+      const creator = await pool.query(
+        `select * from users where id = ${getUserIns.rows[0].id_user_ins}`
+      );
+
+      const checkNotifyType = creator.rows[0].notifications.findIndex(
+        (x) => x.name === notifyType
+      );
+
+      if (checkNotifyType >= 0) {
+        const data = {
+          title: "Статус заявки изменён",
+          type: "Ваша заявка взята в работу",
+          name: creator.rows[0].name,
+          text: "Ваша заявка взята в работу",
+          mail: creator.rows[0].mail,
+          orderId: id,
+        };
+
+        mailMiddleware(data);
+      }
+
+      ///////////////////
 
       res.status(200).json({
         message: "Заявка обновлена!",
@@ -635,6 +704,7 @@ router.put("/api/cancel-order/:id", async (req, res) => {
     );
 
     if (param === 1) {
+      const notifyType = "Отмена заявки";
       const checkCancel = await pool.query(
         `select count(*) from orders where id = ${id} and status = 4`
       );
@@ -664,6 +734,29 @@ router.put("/api/cancel-order/:id", async (req, res) => {
       const getStatus = await pool.query(`
           select * from status where id = ${query.rows[0].status}
         `);
+
+      //////////////////////////////////////// Отправка Email
+      const creator = await pool.query(
+        `select * from users where id = ${getCreator.rows[0].id_user_ins}`
+      );
+
+      const checkNotifyType = creator.rows[0].notifications.findIndex(
+        (x) => x.name === notifyType
+      );
+
+      if (checkNotifyType >= 0) {
+        const data = {
+          title: "Статус заявки изменён",
+          type: "Ваша заявка была отклонена",
+          name: creator.rows[0].name,
+          text: "Вашу заявку отклонили",
+          mail: creator.rows[0].mail,
+          orderId: id,
+        };
+
+        mailMiddleware(data);
+      }
+      /////////////////////////////////////////////////////
 
       return res.status(200).json({
         message: "Заявка отменена!",
@@ -720,6 +813,8 @@ router.put("/api/done-order/:id", async (req, res) => {
     const { id } = req.params;
     const { userId, param } = req.body;
 
+    const notifyType = "Выполнение заявки";
+
     const getUser = await pool.query(
       `select * from users where id = ${userId}`
     );
@@ -741,12 +836,12 @@ router.put("/api/done-order/:id", async (req, res) => {
       }
 
       const doneQuery = await pool.query(`
-      update orders
-      set status = 3, owner_id = ${getUserIns.rows[0].id_user_ins},
-          date_done = now()
-      where id = ${id}
-      returning status
-    `);
+          update orders
+          set status = 3, owner_id = ${getUserIns.rows[0].id_user_ins},
+              date_done = now()
+          where id = ${id}
+          returning status
+      `);
 
       if (doneQuery.rowCount === 0) {
         return res.status(400).json({
@@ -758,6 +853,29 @@ router.put("/api/done-order/:id", async (req, res) => {
       const getStatus = await pool.query(`
         select * from status where id = ${doneQuery.rows[0].status}
       `);
+
+      //////////////////////////////////////// Отправка Email
+      const creator = await pool.query(
+        `select * from users where id = ${getUserIns.rows[0].id_user_ins}`
+      );
+
+      const checkNotifyType = creator.rows[0].notifications.findIndex(
+        (x) => x.name === notifyType
+      );
+
+      if (checkNotifyType >= 0) {
+        const data = {
+          title: "Статус заявки изменён",
+          type: "Ваша заявка выполнена",
+          name: creator.rows[0].name,
+          text: "Статус вашей заявки был изменён на выполнено",
+          mail: creator.rows[0].mail,
+          orderId: id,
+        };
+
+        mailMiddleware(data);
+      }
+      /////////////////////////////////////////////////////
 
       res.status(200).json({
         message: "Заявка обновлена!",
@@ -779,11 +897,11 @@ router.put("/api/done-order/:id", async (req, res) => {
       }
 
       const doneQuery = await pool.query(`
-        update orders
-        set status = 2, owner_id = executor_id,
-            date_done = null
-        where id = ${id}
-        returning status
+          update orders
+          set status = 2, owner_id = executor_id,
+              date_done = null
+          where id = ${id}
+          returning status
       `);
 
       if (doneQuery.rowCount === 0) {
