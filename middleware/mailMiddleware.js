@@ -1,6 +1,6 @@
-import nodemailer from "nodemailer";
-import config from "../config/config.json";
-import emailTemplate from "./emailTemplate.js";
+const nodemailer = require("nodemailer");
+const config = require("../config/config.json");
+const emailTemplate = require("./emailTemplate.js");
 
 const mailMiddleware = (data) => {
   const transporter = nodemailer.createTransport({
@@ -30,4 +30,4 @@ const mailMiddleware = (data) => {
   });
 };
 
-export default mailMiddleware;
+module.exports = mailMiddleware;

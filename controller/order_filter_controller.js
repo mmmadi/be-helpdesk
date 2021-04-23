@@ -1,5 +1,5 @@
-import { Router } from "express";
-import pool from "../config/dbPool.js";
+const { Router } = require("express");
+const pool = require("../config/dbPool.js");
 
 const router = Router();
 
@@ -81,4 +81,4 @@ router.get("/api/get-filter-status", async (req, res) => {
   }
 });
 
-export default router;
+module.exports = router;

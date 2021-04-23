@@ -1,10 +1,10 @@
-import { Router } from "express";
-import { validationResult } from "express-validator";
-import jwt from "jsonwebtoken";
-import bcrypt from "bcryptjs";
-import pool from "../config/dbPool.js";
-import config from "../config/config.json";
-import authMiddleware from "../middleware/authMiddleware.js";
+const { Router } = require("express");
+const { validationResult } = require("express-validator");
+const jwt = require("jsonwebtoken");
+const bcrypt = require("bcryptjs");
+const pool = require("../config/dbPool.js");
+const config = require("../config/config.json");
+const authMiddleware = require("../middleware/authMiddleware.js");
 
 const router = Router();
 
@@ -80,4 +80,4 @@ router.get("/api/check-auth", authMiddleware, async (req, res) => {
   return res.json({ token });
 });
 
-export default router;
+module.exports = router;

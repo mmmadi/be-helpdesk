@@ -1,9 +1,9 @@
-import { Router } from "express";
-import path from "path";
-import bcrypt from "bcryptjs";
-import fs from "fs";
-import rimraf from "rimraf";
-import pool from "../config/dbPool.js";
+const { Router } = require("express");
+const path = require("path");
+const bcrypt = require("bcryptjs");
+const fs = require("fs");
+const rimraf = require("rimraf");
+const pool = require("../config/dbPool.js");
 
 const router = Router();
 
@@ -183,4 +183,4 @@ router.put("/api/profile/change-notifications/:id", async (req, res) => {
   }
 });
 
-export default router;
+module.exports = router;

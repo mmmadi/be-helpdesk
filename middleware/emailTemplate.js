@@ -78,5 +78,4 @@ const emailTemplate = (data) => {
 
   return html;
 };
-
-export default emailTemplate;
+module.exports = emailTemplate;

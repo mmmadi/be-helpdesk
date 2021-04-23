@@ -3,11 +3,9 @@
   "version": "1.0.0",
   "description": "",
   "main": "app_es6.js",
-  "type": "module",
   "scripts": {
-    "start": "nodemon --experimental-json-modules app_es6.js",
-    "prod": "node --experimental-json-modules app_es6.js",
-    "cluster": "pm2 -i 4 start npm -- run prod"
+    "dev": "nodemon app_es6.js",
+    "prod": "node app_es6.js"
   },
   "keywords": [],
   "author": "",

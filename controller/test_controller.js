@@ -1,5 +1,5 @@
-import { Router } from "express";
-import pool from "../config/dbPool.js";
+const { Router } = require("express");
+const pool = require("../config/dbPool.js");
 
 const router = Router();
 
@@ -11,4 +11,4 @@ router.get("/api/test", async (req, res) => {
     res.json({ message: e.message });
   }
 });
-export default router;
+module.exports = router;

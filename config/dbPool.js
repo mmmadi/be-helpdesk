@@ -1,7 +1,7 @@
-import Pool from "pg-pool";
-import config from "./config.json";
+const Pool = require("pg").Pool;
+const config = require("./config");
 
 const databaseConfig = config.dbConfig;
 const pool = new Pool(databaseConfig);
 
-export default pool;
+module.exports = pool;
