@@ -9,11 +9,11 @@
     "port": 5000,
     "jwtSecret": "lapidal",
     "authMail": {
-      "user": "m.makhatov@petroleum.com.kz",
-      "pass": "!plm001023mm"
+      "user": "helpdesk@plmgroup.kz",
+      "pass": "@112apkOK"
     },
     "mailSettings": {
-      "smtp": "smtp.petroleum.com.kz",
+      "smtp": "smtp.plmgroup.kz",
       "port": 25
     }
   }
