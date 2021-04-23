@@ -2,10 +2,12 @@
   "name": "be-helpdesk",
   "version": "1.0.0",
   "description": "",
-  "main": "app.js",
+  "main": "app_es6.js",
   "type": "module",
   "scripts": {
-    "start": "nodemon --experimental-json-modules app.js"
+    "start": "nodemon --experimental-json-modules app_es6.js",
+    "prod": "node --experimental-json-modules app_es6.js",
+    "cluster": "pm2 -i 4 start npm -- run prod"
   },
   "keywords": [],
   "author": "",
