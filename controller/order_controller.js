@@ -5,6 +5,7 @@ const fs = require("fs");
 const rimraf = require("rimraf");
 const pool = require("../config/dbPool.js");
 const mailMiddleware = require("../middleware/mailMiddleware.js");
+const checkWorkTime = require("../middleware/checkWorkTime.js");
 
 const router = Router();
 
@@ -67,59 +68,64 @@ router.post("/api/create-order", async (req, res) => {
       }}`;
     })}]}`;
 
+    const dateIns = new Date();
+
+    const isWorkTime = checkWorkTime(dateIns);
+
     const query = await pool.query(
       `
         insert into orders
-        (prioritet, subject, description, id_user_ins, date_ins, files, status, owner_id, task_id, executor_id, spec_id, sub_spec_id)
-        values ($1,$2,$3,$4,$5,$6,1,null,$7,null,$8,$9) returning id;
+        (prioritet, subject, description, id_user_ins, date_ins, files, status, owner_id, task_id, executor_id, spec_id, sub_spec_id, isworktime)
+        values ($1,$2,$3,$4,$5,$6,1,null,$7,null,$8,$9, $10) returning id;
     `,
       [
         form.priority,
         form.subject,
         form.description,
         form.userId,
-        new Date(),
+        dateIns,
         docs,
         form.task,
         form.spec === "" ? null : form.spec,
         form.sub_spec === "" ? null : form.sub_spec,
+        isWorkTime,
       ]
     );
 
     //// отправка email
 
-     const getTaskName = await pool.query(`
+    const getTaskName = await pool.query(`
        select s.name
        from structs s
        left join task t on t.struct_id = s.id
        where t.id = ${form.task}
      `);
 
-     const getTaskEmails = await pool.query(`
+    const getTaskEmails = await pool.query(`
        select mail, notifications from users u
        left join structs s on s.id = u.id_struct
        left join task t on t.struct_id = s.id
        where t.id = ${form.task}
      `);
 
-     const getAllowsNotify = getTaskEmails.rows.filter((user) =>
-       user.notifications.find((x) => x.name === notifyType)
-     );
+    const getAllowsNotify = getTaskEmails.rows.filter((user) =>
+      user.notifications.find((x) => x.name === notifyType)
+    );
 
-     const modified = getAllowsNotify.map((x) => {
-       return x["mail"];
-     });
+    const modified = getAllowsNotify.map((x) => {
+      return x["mail"];
+    });
 
-     const data = {
-       title: "Заявка создана",
-       type: "Заявка создана",
-       name: getTaskName.rows[0].name,
-       text: `К вам поступила новая заявка <br> № ${query.rows[0].id} <br> Тема: ${form.subject}`,
-       mail: modified.join(),
-       orderId: query.rows[0].id,
-     };
+    const data = {
+      title: "Заявка создана",
+      type: "Заявка создана",
+      name: getTaskName.rows[0].name,
+      text: `К вам поступила новая заявка <br> № ${query.rows[0].id} <br> Тема: ${form.subject}`,
+      mail: modified.join(),
+      orderId: query.rows[0].id,
+    };
 
-     mailMiddleware(data);
+    mailMiddleware(data);
 
     ///////////////////
 
