@@ -1,12 +1,12 @@
 {
     "dbConfig": {
       "user": "postgres",
-      "password": "!sql123",
-      "host": "192.168.40.87",
+      "password": "!plm001023mm",
+      "host": "localhost",
       "port": 5432,
       "database": "helpdesk"
     },
-    "port": 5000,
+    "port": 8080,
     "jwtSecret": "lapidal",
     "authMail": {
       "user": "helpdesk@plmgroup.kz",

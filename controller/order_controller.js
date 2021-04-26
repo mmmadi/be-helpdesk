@@ -88,38 +88,38 @@ router.post("/api/create-order", async (req, res) => {
 
     //// отправка email
 
-    // const getTaskName = await pool.query(`
-    //   select s.name
-    //   from structs s
-    //   left join task t on t.struct_id = s.id
-    //   where t.id = ${form.task}
-    // `);
+     const getTaskName = await pool.query(`
+       select s.name
+       from structs s
+       left join task t on t.struct_id = s.id
+       where t.id = ${form.task}
+     `);
 
-    // const getTaskEmails = await pool.query(`
-    //   select mail, notifications from users u
-    //   left join structs s on s.id = u.id_struct
-    //   left join task t on t.struct_id = s.id
-    //   where t.id = ${form.task}
-    // `);
+     const getTaskEmails = await pool.query(`
+       select mail, notifications from users u
+       left join structs s on s.id = u.id_struct
+       left join task t on t.struct_id = s.id
+       where t.id = ${form.task}
+     `);
 
-    // const getAllowsNotify = getTaskEmails.rows.filter((user) =>
-    //   user.notifications.find((x) => x.name === notifyType)
-    // );
+     const getAllowsNotify = getTaskEmails.rows.filter((user) =>
+       user.notifications.find((x) => x.name === notifyType)
+     );
 
-    // const modified = getAllowsNotify.map((x) => {
-    //   return x["mail"];
-    // });
+     const modified = getAllowsNotify.map((x) => {
+       return x["mail"];
+     });
 
-    // const data = {
-    //   title: "Заявка создана",
-    //   type: "Заявка создана",
-    //   name: getTaskName.rows[0].name,
-    //   text: `К вам поступила новая заявка <br> № ${query.rows[0].id} <br> Тема: ${form.subject}`,
-    //   mail: modified.join(),
-    //   orderId: query.rows[0].id,
-    // };
+     const data = {
+       title: "Заявка создана",
+       type: "Заявка создана",
+       name: getTaskName.rows[0].name,
+       text: `К вам поступила новая заявка <br> № ${query.rows[0].id} <br> Тема: ${form.subject}`,
+       mail: modified.join(),
+       orderId: query.rows[0].id,
+     };
 
-    // mailMiddleware(data);
+     mailMiddleware(data);
 
     ///////////////////
 

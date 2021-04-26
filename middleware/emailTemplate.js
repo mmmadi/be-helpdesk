@@ -49,7 +49,7 @@ const emailTemplate = (data) => {
                           <tr>
                            <td style="display: flex; align-items: center; justify-content: center;">
                             <a 
-                              href="http://192.168.40.87:3000/orders/${data.orderId}" 
+                              href="http://192.168.40.5/orders/${data.orderId}" 
                               style="
                                   text-decoration: none; 
                                   color: #fff;
