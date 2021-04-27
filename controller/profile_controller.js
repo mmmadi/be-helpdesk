@@ -29,6 +29,7 @@ router.post("/api/profile/get-general-settings", async (req, res) => {
         query.rows[0].img,
         query.rows[0].notifications,
         notifications.rows,
+        query.rows[0].telegram,
       ]);
   } catch (e) {
     res.status(500).json({ message: e.message, type: "danger" });
@@ -182,5 +183,49 @@ router.put("/api/profile/change-notifications/:id", async (req, res) => {
     res.status(500).json({ message: e.message, type: "danger" });
   }
 });
+
+router.put(
+  "/api/profile/change-telegram-notifications/:id",
+  async (req, res) => {
+    try {
+      const { notifications, telegram_id } = req.body;
+      const { id } = req.params;
+
+      if (!notifications) {
+        return res
+          .status(400)
+          .json({ message: "Что-то пошло не так!", type: "danger" });
+      }
+
+      const data = `[${notifications.map((x) => {
+        return `{"id": ${x.id}, "name": ${'"' + x.name + '"'}, "checked": ${
+          x.checked
+        }}`;
+      })}]`;
+
+      const query = await pool.query(
+        `
+        update users
+        set telegram = $1, telegram_id = $2
+        where id = ${id}
+      `,
+        [data, telegram_id]
+      );
+
+      if (query.rowCount === 0) {
+        return res.status(400).json({
+          message: "Что-то пошло не так! Обратитесь к администратору.",
+          type: "danger",
+        });
+      }
+
+      return res
+        .status(200)
+        .json({ message: "Настройки изменены!", type: "success" });
+    } catch (e) {
+      res.status(500).json({ message: e.message, type: "danger" });
+    }
+  }
+);
 
 module.exports = router;

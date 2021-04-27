@@ -15,6 +15,10 @@
     "mailSettings": {
       "smtp": "smtp.plmgroup.kz",
       "port": 25
+    },
+    "telegram": {
+      "token": "1703246525:AAHjqxiOtPVC5emwu7q0RFG1PsMUGfcah5M",
+      "parse_mode": "MarkdownV2"
     }
   }
   

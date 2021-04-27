@@ -1,11 +1,15 @@
 const { Router } = require("express");
 const { validationResult } = require("express-validator");
+const request = require("request");
 const path = require("path");
 const fs = require("fs");
+const utf8 = require("utf8");
 const rimraf = require("rimraf");
 const pool = require("../config/dbPool.js");
+const config = require("../config/config.json");
 const mailMiddleware = require("../middleware/mailMiddleware.js");
 const checkWorkTime = require("../middleware/checkWorkTime.js");
+const telegramText = require("../helpers/telegramText.js");
 
 const router = Router();
 
@@ -129,10 +133,47 @@ router.post("/api/create-order", async (req, res) => {
 
     ///////////////////
 
+    //// отправка telegram
+
+    const getTeleIds = await pool.query(`
+      select telegram_id, telegram from users u
+      left join structs s on s.id = u.id_struct
+      left join task t on t.struct_id = s.id
+      where t.id = ${form.task}
+    `);
+
+    const getAllowsTelegramNotify = getTeleIds.rows.filter((user) =>
+      user.telegram.find((x) => x.name === notifyType)
+    );
+
+    const modifiedTele = getAllowsTelegramNotify.map((x) => {
+      return x["telegram_id"];
+    });
+
+    const text = telegramText(1, {
+      id: query.rows[0].id,
+      subject: form.subject,
+    });
+
+    modifiedTele.forEach((x) => {
+      request(
+        `https://api.telegram.org/bot${
+          config.telegram.token
+        }/sendMessage?chat_id=${x}&text=${utf8.encode(text)}&parse_mode=${
+          config.telegram.parse_mode
+        }`,
+        (error) => {
+          console.log(error);
+        }
+      );
+    });
+
+    ///////////////////
+
     if (!files.length) {
       return res
         .status(200)
-        .json({ message: "Заявка добавлена!", status: 200, type: "success" });
+        .json({ message: "Заявка добавлена!", type: "success" });
     }
 
     const __dirname = path.resolve();
@@ -646,6 +687,33 @@ router.put("/api/take-in-work-order/:id", async (req, res) => {
 
       ///////////////////
 
+      //// отправка telegram
+
+      const checkTelegramNotifyType = creator.rows[0].telegram.findIndex(
+        (x) => x.name === notifyType
+      );
+
+      const text = telegramText(2, {
+        id: id,
+        subject: "",
+        name: creator.rows[0].name,
+      });
+
+      if (checkTelegramNotifyType >= 0) {
+        request(
+          `https://api.telegram.org/bot${
+            config.telegram.token
+          }/sendMessage?chat_id=${
+            creator.rows[0].telegram_id
+          }&text=${utf8.encode(text)}&parse_mode=${config.telegram.parse_mode}`,
+          (error) => {
+            console.log(error);
+          }
+        );
+      }
+
+      ///////////////////
+
       res.status(200).json({
         message: "Заявка обновлена!",
         type: "success",
@@ -763,6 +831,33 @@ router.put("/api/cancel-order/:id", async (req, res) => {
         mailMiddleware(data);
       }
       /////////////////////////////////////////////////////
+
+      //// отправка telegram
+
+      const checkTelegramNotifyType = creator.rows[0].telegram.findIndex(
+        (x) => x.name === notifyType
+      );
+
+      const text = telegramText(4, {
+        id: id,
+        subject: "",
+        name: creator.rows[0].name,
+      });
+
+      if (checkTelegramNotifyType >= 0) {
+        request(
+          `https://api.telegram.org/bot${
+            config.telegram.token
+          }/sendMessage?chat_id=${
+            creator.rows[0].telegram_id
+          }&text=${utf8.encode(text)}&parse_mode=${config.telegram.parse_mode}`,
+          (error) => {
+            console.log(error);
+          }
+        );
+      }
+
+      ///////////////////
 
       return res.status(200).json({
         message: "Заявка отменена!",
@@ -882,6 +977,33 @@ router.put("/api/done-order/:id", async (req, res) => {
         mailMiddleware(data);
       }
       /////////////////////////////////////////////////////
+
+      //// отправка telegram
+
+      const checkTelegramNotifyType = creator.rows[0].telegram.findIndex(
+        (x) => x.name === notifyType
+      );
+
+      const text = telegramText(3, {
+        id: id,
+        subject: "",
+        name: creator.rows[0].name,
+      });
+
+      if (checkTelegramNotifyType >= 0) {
+        request(
+          `https://api.telegram.org/bot${
+            config.telegram.token
+          }/sendMessage?chat_id=${
+            creator.rows[0].telegram_id
+          }&text=${utf8.encode(text)}&parse_mode=${config.telegram.parse_mode}`,
+          (error) => {
+            console.log(error);
+          }
+        );
+      }
+
+      ///////////////////
 
       res.status(200).json({
         message: "Заявка обновлена!",
