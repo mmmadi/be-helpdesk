@@ -332,7 +332,7 @@ router.post("/api/get-orders", async (req, res) => {
             p.name as priority,
             o.subject,
             author.FIO as author,
-            to_char(o.date_ins, 'DD TMMonth YYYY, HH24:MI'::text) AS date_ins,
+            to_char(o.date_ins, 'DD.MM.YY, HH24:MI'::text) AS date_ins,
             owner.fio as owner,
             exec.fio as executor,
             s.name as status,
@@ -356,6 +356,8 @@ router.post("/api/get-orders", async (req, res) => {
       return res.status(200).json(query.rows);
     }
 
+    // to_char(o.date_ins, 'DD TMMonth YYYY, HH24:MI'::text) AS date_ins
+
     const query = await pool.query(
       `
       select
@@ -363,7 +365,7 @@ router.post("/api/get-orders", async (req, res) => {
           p.name as priority,
           o.subject,
           author.FIO as author,
-          to_char(o.date_ins, 'DD TMMonth YYYY, HH24:MI'::text) AS date_ins,
+          to_char(o.date_ins, 'DD.MM.YY, HH24:MI'::text) AS date_ins,
           owner.fio as owner,
           exec.fio as executor,
           s.name as status,

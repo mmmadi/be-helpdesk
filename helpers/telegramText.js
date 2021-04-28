@@ -2,7 +2,7 @@ const telegramText = (type, data) => {
   let text = "";
 
   const checkStatus = "Посмотрите%20статус%20заявки%20в%20приложение";
-  const button = `[Открыть%20заявку](http://192.168.40.87:3000/orders/${data.id})`;
+  const button = `[Открыть%20заявку](http://192.168.40.5/orders/${data.id})`;
 
   // Создание заявки
   if (type === 1) {
