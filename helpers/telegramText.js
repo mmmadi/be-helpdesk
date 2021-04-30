@@ -22,10 +22,16 @@ const telegramText = (type, data) => {
     *Здравствуйте,%20${data.name}*%0aСтатус%20вашей%20заявки%20был%20изменён%20на%20выполнено%0a${checkStatus}%0a${button}
   `;
     return text;
-  } else {
+  } else if (type === 4) {
     // Отмена заявки
     text = `
     *Здравствуйте,%20${data.name}*%0aВашу%20заявку%20отклонили%0a${checkStatus}%0a${button}
+  `;
+    return text;
+  } else {
+    // Добавление в участники
+    text = `
+    *Здравствуйте,%20${data.name}*%0aВас%20добавили%20в%20участники%20заявки%0a${checkStatus}%0a${button}
   `;
     return text;
   }
