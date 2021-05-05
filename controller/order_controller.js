@@ -81,7 +81,11 @@ router.get("/api/get-order/:id", async (req, res) => {
     const { id } = req.params;
 
     if (!id) {
-      return res.status(400).json({ message: "id is null" });
+      return res.status(400).json({
+        data: [],
+        message: "пустой id. Обратитесь к администратору!",
+        type: "danger",
+      });
     }
 
     const query = await pool.query(
@@ -131,9 +135,25 @@ router.get("/api/get-order/:id", async (req, res) => {
       [id]
     );
 
-    res.status(200).json(query.rows);
+    if (query.rowCount === 0) {
+      return res.status(200).json({
+        data: [],
+        message: "Данной заявки не существует, обратитесь к администратору!",
+        type: "warning",
+      });
+    }
+
+    return res.status(200).json({
+      data: query.rows,
+      message: "Success query",
+      type: "success",
+    });
   } catch (e) {
-    res.status(500).json({ message: e.message });
+    res.status(500).json({
+      data: [],
+      message: "catch get-order-id " + e.message,
+      type: "danger",
+    });
   }
 });
 router.get("/api/get-comments/:id", async (req, res) => {
@@ -156,9 +176,17 @@ router.get("/api/get-comments/:id", async (req, res) => {
       order by c.date_ins
     `);
 
-    res.status(200).json(query.rows);
+    res.status(200).json({
+      data: query.rows,
+      message: "success",
+      type: "success",
+    });
   } catch (e) {
-    res.status(500).json({ message: e.message });
+    res.status(500).json({
+      data: [],
+      message: "catch get-comments-id " + e.message,
+      type: "danger",
+    });
   }
 });
 router.get("/api/get-order-party/:id", async (req, res) => {
@@ -178,9 +206,17 @@ router.get("/api/get-order-party/:id", async (req, res) => {
       where op.order_id = ${id}
     `);
 
-    res.status(200).json(query.rows);
+    res.status(200).json({
+      data: query.rows,
+      message: "success",
+      type: "success",
+    });
   } catch (e) {
-    res.status(500).json({ message: e.message, type: "danger" });
+    res.status(500).json({
+      data: [],
+      message: "catch get-order-party-id " + e.message,
+      type: "danger",
+    });
   }
 });
 
@@ -406,7 +442,11 @@ router.post("/api/get-orders", async (req, res) => {
       `
       );
 
-      return res.status(200).json(query.rows);
+      return res.status(200).json({
+        data: query.rows,
+        message: "success",
+        type: "success",
+      });
     }
 
     // to_char(o.date_ins, 'DD TMMonth YYYY, HH24:MI'::text) AS date_ins
@@ -444,9 +484,17 @@ router.post("/api/get-orders", async (req, res) => {
     `
     );
 
-    res.status(200).json(query.rows);
+    return res.status(200).json({
+      data: query.rows,
+      message: "success",
+      type: "success",
+    });
   } catch (e) {
-    res.status(500).json({ message: e.message });
+    return res.status(500).json({
+      data: [],
+      message: "catch get-orders " + e.message,
+      type: "danger",
+    });
   }
 });
 router.post("/api/get-filter-orders", async (req, res) => {
