@@ -6,6 +6,7 @@ const orderController = require("./controller/order_controller.js");
 const orderFilterController = require("./controller/order_filter_controller.js");
 const dashboardController = require("./controller/dashboard_controller.js");
 const profileController = require("./controller/profile_controller.js");
+const helpController = require("./controller/help_controller");
 
 const PORT = config.port || 8081;
 const app = express();
@@ -26,6 +27,7 @@ app.use(orderController);
 app.use(orderFilterController);
 app.use(dashboardController);
 app.use(profileController);
+app.use(helpController);
 
 app.listen(PORT, () => {
   console.log(`Server has been started on port ${PORT}...`);

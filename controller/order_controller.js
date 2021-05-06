@@ -377,10 +377,16 @@ router.post("/api/create-order", async (req, res) => {
 
     const current_path = path.resolve(__dirname);
 
-    const order_dir = current_path + `/public/orders/${query.rows[0].id}`;
+    const order_dir = current_path + `/public/orders`;
+
+    const order_id_dir = current_path + `/public/orders/${query.rows[0].id}`;
 
     if (!fs.existsSync(order_dir)) {
       fs.mkdirSync(order_dir);
+    }
+
+    if (!fs.existsSync(order_id_dir)) {
+      fs.mkdirSync(order_id_dir);
     }
 
     files.forEach((file) => {
@@ -670,8 +676,19 @@ router.post("/api/add-comment", async (req, res) => {
 
     const current_path = path.resolve(__dirname);
 
+    const order_dir = current_path + `/public/orders`;
+
+    const order_id_dir = current_path + `/public/orders/${id}`;
+
     const comments_dir = current_path + `/public/orders/${id}/comments`;
 
+    if (!fs.existsSync(order_dir)) {
+      fs.mkdirSync(order_dir);
+    }
+
+    if (!fs.existsSync(order_id_dir)) {
+      fs.mkdirSync(order_id_dir);
+    }
     if (!fs.existsSync(comments_dir)) {
       fs.mkdirSync(comments_dir);
     }
@@ -696,11 +713,11 @@ router.post("/api/add-comment", async (req, res) => {
 
     res.status(200).json({
       message: "Комментарий добавлен!",
-      status: 200,
+      type: "success",
       data: getNewComments.rows,
     });
   } catch (e) {
-    res.status(500).json({ message: e.message });
+    res.status(500).json({ data: [], message: e.message, type: "danger" });
   }
 });
 router.post("/api/add-order-party", async (req, res) => {
