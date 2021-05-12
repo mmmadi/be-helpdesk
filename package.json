@@ -2,10 +2,10 @@
   "name": "be-helpdesk",
   "version": "1.0.0",
   "description": "",
-  "main": "app_es6.js",
+  "main": "app.js",
   "scripts": {
-    "dev": "nodemon app_es6.js",
-    "prod": "node app_es6.js"
+    "dev": "nodemon app.js",
+    "prod": "node app.js"
   },
   "keywords": [],
   "author": "",

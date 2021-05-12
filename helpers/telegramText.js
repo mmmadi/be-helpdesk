@@ -2,6 +2,9 @@ const telegramText = (type, data) => {
   let text = "";
 
   const checkStatus = "Посмотрите%20статус%20заявки%20в%20приложение";
+  const checkComments =
+    "Посмотрите%20новые%20добавленные%20комментарии%20в%20вашей%20заявки";
+  const checkAnswer = "Посмотрите%20ответ%20на%20Ваш%20комментарий";
   const button = `[Открыть%20заявку](http://192.168.40.5/orders/${data.id})`;
 
   // Создание заявки
@@ -28,10 +31,22 @@ const telegramText = (type, data) => {
     *Здравствуйте,%20${data.name}*%0aВашу%20заявку%20отклонили%0a${checkStatus}%0a${button}
   `;
     return text;
-  } else {
+  } else if (type === 5) {
     // Добавление в участники
     text = `
     *Здравствуйте,%20${data.name}*%0aВас%20добавили%20в%20участники%20заявки%0a${checkStatus}%0a${button}
+  `;
+    return text;
+  } else if (type === 6) {
+    // Комментирование заявки
+    text = `
+    *Здравствуйте,%20${data.name}*%0aВашу%20заявку%20прокомментировали%0a${checkComments}%0a${button}
+  `;
+    return text;
+  } else {
+    // Ответ на комментарий
+    text = `
+    *Здравствуйте,%20${data.name}*%0aНа%20Ваш%20комментарий%20ответили%0a${checkAnswer}%0a${button}
   `;
     return text;
   }

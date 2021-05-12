@@ -166,10 +166,12 @@ router.get("/api/get-comments/:id", async (req, res) => {
         c.comment,
         c.files,
         to_char(c.date_ins, 'DD TMMonth YYYY, HH24:MI'::text) AS date_ins,
+        c.date_ins AS date_ins_true,
         c.id_user_ins,
         u.fio,
         u.img,
-        c.order_id
+        c.order_id,
+        u.username
       from comments c
       left join users u on u.id = c.id_user_ins
       where c.order_id = ${id}
@@ -185,6 +187,43 @@ router.get("/api/get-comments/:id", async (req, res) => {
     res.status(500).json({
       data: [],
       message: "catch get-comments-id " + e.message,
+      type: "danger",
+    });
+  }
+});
+router.get("/api/get-under-comments/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const query = await pool.query(`
+      select
+        uc.id,
+        uc.text,
+        uc.date_ins,
+        uc.comment_id,
+        uc.id_user_ins,
+        u.fio,
+        u.username,
+        u.img,
+        c.order_id,
+        marked.username as marked
+      from under_comments uc
+      left join comments c on c.id = uc.comment_id
+      left join users u on u.id = uc.id_user_ins
+      left join users marked on marked.id = uc.mark
+      where c.order_id = ${id}
+      order by uc.date_ins
+    `);
+
+    res.status(200).json({
+      data: query.rows,
+      message: "success",
+      type: "success",
+    });
+  } catch (e) {
+    res.status(500).json({
+      data: [],
+      message: "catch get-under-comments-id " + e.message,
       type: "danger",
     });
   }
@@ -634,6 +673,12 @@ router.post("/api/add-comment", async (req, res) => {
   try {
     const { id, form, files } = req.body;
 
+    const notifyType = "Комментирование заявки";
+
+    const getUserIns = await pool.query(
+      `select * from orders where id = ${id}`
+    );
+
     const docs = `{"files": [${files.map((file) => {
       return `{"name": ${'"' + file.name + '"'}, "hashname": ${
         '"' + file.hashName + '"'
@@ -655,14 +700,67 @@ router.post("/api/add-comment", async (req, res) => {
         c.comment,
         c.files,
         to_char(c.date_ins, 'DD TMMonth YYYY, HH24:MI'::text) AS date_ins,
+        c.date_ins AS date_ins_true,
         c.id_user_ins,
         u.fio,
-        c.order_id
+        u.img,
+        c.order_id,
+        u.username
       from comments c
       left join users u on u.id = c.id_user_ins
       where c.order_id = ${id}
       order by c.date_ins
     `);
+
+    //////////////////////////////////////// Отправка Email
+    const creator = await pool.query(
+      `select * from users where id = ${getUserIns.rows[0].id_user_ins}`
+    );
+
+    const checkNotifyType = creator.rows[0].notifications.findIndex(
+      (x) => x.name === notifyType
+    );
+
+    if (checkNotifyType >= 0) {
+      const data = {
+        title: "Добавлен комментарий",
+        type: "Вашу заявку прокомментировали",
+        name: creator.rows[0].name,
+        text: "Вашу заявку прокомментировали",
+        mail: creator.rows[0].mail,
+        orderId: id,
+      };
+
+      mailMiddleware(data);
+    }
+    /////////////////////////////////////////////////////
+
+    //// отправка telegram
+
+    const checkTelegramNotifyType = creator.rows[0].telegram.findIndex(
+      (x) => x.name === notifyType
+    );
+
+    const text = telegramText(6, {
+      id: id,
+      subject: "",
+      name: creator.rows[0].name,
+    });
+
+    if (checkTelegramNotifyType >= 0) {
+      request(
+        `https://api.telegram.org/bot${
+          config.telegram.token
+        }/sendMessage?chat_id=${creator.rows[0].telegram_id}&text=${utf8.encode(
+          text
+        )}&parse_mode=${config.telegram.parse_mode}`,
+        (error) => {
+          if (error) console.log(error);
+        }
+      );
+    }
+
+    ///////////////////
 
     if (!files.length) {
       return res.status(200).json({
@@ -710,6 +808,104 @@ router.post("/api/add-comment", async (req, res) => {
         }
       );
     });
+
+    res.status(200).json({
+      message: "Комментарий добавлен!",
+      type: "success",
+      data: getNewComments.rows,
+    });
+  } catch (e) {
+    res.status(500).json({ data: [], message: e.message, type: "danger" });
+  }
+});
+router.post("/api/add-under-comment", async (req, res) => {
+  try {
+    const { id, userId, text, orderId, mark } = req.body;
+
+    const notifyType = "Ответ на комментарий";
+
+    const query = await pool.query(
+      `
+      insert into under_comments (text, date_ins, id_user_ins, comment_id, mark)
+      values ('${text}', now(), ${userId}, ${id}, ${mark ? mark : null});
+    `
+    );
+
+    const getNewComments = await pool.query(`
+      select
+        uc.id,
+        uc.text,
+        uc.date_ins,
+        uc.comment_id,
+        uc.id_user_ins,
+        u.fio,
+        u.username,
+        u.img,
+        c.order_id,
+        marked.username as marked
+      from under_comments uc
+      left join comments c on c.id = uc.comment_id
+      left join users u on u.id = uc.id_user_ins
+      left join users marked on marked.id = uc.mark
+      where c.order_id = ${orderId}
+      order by uc.date_ins
+    `);
+
+    if (!mark) {
+      return res.status(200).json({
+        message: "Комментарий добавлен!",
+        type: "success",
+        data: getNewComments.rows,
+      });
+    }
+
+    //////////////////////////////////////// Отправка Email
+    const creator = await pool.query(`select * from users where id = ${mark}`);
+
+    const checkNotifyType = creator.rows[0].notifications.findIndex(
+      (x) => x.name === notifyType
+    );
+
+    if (checkNotifyType >= 0) {
+      const data = {
+        title: "Ответ в комментариях",
+        type: "На Ваш комментарий ответили",
+        name: creator.rows[0].name,
+        text: "На Ваш комментарий ответили",
+        mail: creator.rows[0].mail,
+        orderId: orderId,
+      };
+
+      mailMiddleware(data);
+    }
+    /////////////////////////////////////////////////////
+
+    //// отправка telegram
+
+    const checkTelegramNotifyType = creator.rows[0].telegram.findIndex(
+      (x) => x.name === notifyType
+    );
+
+    const textTele = telegramText(7, {
+      id: orderId,
+      subject: "",
+      name: creator.rows[0].name,
+    });
+
+    if (checkTelegramNotifyType >= 0) {
+      request(
+        `https://api.telegram.org/bot${
+          config.telegram.token
+        }/sendMessage?chat_id=${creator.rows[0].telegram_id}&text=${utf8.encode(
+          textTele
+        )}&parse_mode=${config.telegram.parse_mode}`,
+        (error) => {
+          if (error) console.log(error);
+        }
+      );
+    }
+
+    ///////////////////
 
     res.status(200).json({
       message: "Комментарий добавлен!",
