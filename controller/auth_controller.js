@@ -19,12 +19,10 @@ router.post("/api/login", async (req, res) => {
       });
     }
 
-    const { email, password } = req.body;
+    const { username, password } = req.body;
 
-    console.log(email, password);
-
-    const user = await pool.query("select * from Users where mail = $1", [
-      email,
+    const user = await pool.query("select * from Users where username = $1", [
+      username,
     ]);
 
     if (user.rowCount === 0) {
@@ -44,7 +42,7 @@ router.post("/api/login", async (req, res) => {
     const token = jwt.sign(
       {
         userId: user.rows[0].id,
-        email: user.rows[0].mail,
+        email: user.rows[0].email,
         id_struct: user.rows[0].id_struct,
       },
       config.jwtSecret,
