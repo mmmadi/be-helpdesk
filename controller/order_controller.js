@@ -430,7 +430,7 @@ router.post("/api/create-order", async (req, res) => {
 
     files.forEach((file) => {
       fs.writeFile(
-        `${order_dir}/${file.hashName}`,
+        `${order_id_dir}/${file.hashName}`,
         file.base64,
         "base64",
         function (err) {
