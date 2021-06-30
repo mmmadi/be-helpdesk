@@ -483,7 +483,7 @@ router.post("/api/get-orders", async (req, res) => {
         left join spec on spec.id = o.spec_id
         left join sub_spec on sub_spec.id = o.sub_spec_id
         where o.id_user_ins = ${userId}
-        order by o.date_ins
+        order by o.status, o.date_ins desc
       `
       );
 
@@ -525,7 +525,7 @@ router.post("/api/get-orders", async (req, res) => {
           ? `where id_user_ins = ${userId}`
           : `where o.task_id = ${getTask.rows[0].id} or o.owner_id = ${userId}`
       }
-      order by o.date_ins
+      order by o.status, o.date_ins desc
     `
     );
 
@@ -584,7 +584,7 @@ router.post("/api/get-filter-orders", async (req, res) => {
         left join sub_spec sub_spec on sub_spec.id = o.sub_spec_id
         where (o.task_id = ${getTask.rows[0].id} or o.owner_id = ${userId})
           and (
-              o.date_update between '${startDate}' and '${endDate}'
+              o.date_ins between '${startDate}' and '${endDate}'
               ${
                 form.spec !== ""
                   ? `and o.spec_id = '${form.spec}'`
@@ -610,7 +610,9 @@ router.post("/api/get-filter-orders", async (req, res) => {
       `
       );
 
-      return res.status(200).json(query.rows);
+      return res
+        .status(200)
+        .json({ data: query.rows, message: "success", type: "success" });
     } else {
       const query = await pool.query(
         `
@@ -638,7 +640,7 @@ router.post("/api/get-filter-orders", async (req, res) => {
         left join sub_spec sub_spec on sub_spec.id = o.sub_spec_id
         where id_user_ins = ${userId}
         and (
-          o.date_update between '${startDate}' and '${endDate}'
+          o.date_ins between '${startDate}' and '${endDate}'
           ${
             form.spec !== ""
               ? `and o.spec_id = '${form.spec}'`
@@ -663,10 +665,12 @@ router.post("/api/get-filter-orders", async (req, res) => {
         order by o.date_ins
       `
       );
-      return res.status(200).json(query.rows);
+      return res
+        .status(200)
+        .json({ data: query.rows, message: "success", type: "success" });
     }
   } catch (e) {
-    res.status(500).json({ message: e.message });
+    res.status(500).json({ data: [], message: e.message, type: "danger" });
   }
 });
 router.post("/api/add-comment", async (req, res) => {
