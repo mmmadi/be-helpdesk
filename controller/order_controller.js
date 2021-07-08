@@ -356,11 +356,24 @@ router.post("/api/create-order", async (req, res) => {
       return x["mail"];
     });
 
+    const spec_mail = await pool.query(
+      `select name from spec where id = ${form.spec}`
+    );
+    const subspec_mail = await pool.query(
+      `select name from sub_spec where id = ${form.sub_spec}`
+    );
+
+    console.log(subspec_mail);
+
     const data = {
       title: "Заявка создана",
       type: "Заявка создана",
       name: getTaskName.rows[0].name,
-      text: `К вам поступила новая заявка <br> № ${query.rows[0].id} <br> Тема: ${form.subject}`,
+      text: `К вам поступила новая заявка <br> № ${
+        query.rows[0].id
+      } <br> Тема: ${form.subject} <br> Тип: ${
+        spec_mail.rows[0].name + "/" + subspec_mail.rows[0].name
+      }`,
       mail: modified.join(),
       orderId: query.rows[0].id,
     };
@@ -385,10 +398,17 @@ router.post("/api/create-order", async (req, res) => {
     const modifiedTele = getAllowsTelegramNotify.map((x) => {
       return x["telegram_id"];
     });
+    const spec = await pool.query(
+      `select name from spec where id = ${form.spec}`
+    );
+    const subspec = await pool.query(
+      `select name from sub_spec where id = ${form.sub_spec}`
+    );
 
     const text = telegramText(1, {
       id: query.rows[0].id,
       subject: form.subject,
+      spec: spec.rows[0].name + "/" + subspec.rows[0].name,
     });
 
     modifiedTele.forEach((x) => {

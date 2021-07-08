@@ -1,15 +1,17 @@
 const telegramText = (type, data) => {
   let text = "";
 
-  const checkStatus = "Посмотрите%20статус%20заявки%20в%20приложение";
+  const checkStatus = "Посмотрите%20статус%20заявки%20в%20приложении";
   const checkComments =
     "Посмотрите%20новые%20добавленные%20комментарии%20в%20вашей%20заявки";
   const checkAnswer = "Посмотрите%20ответ%20на%20Ваш%20комментарий";
   const button = `[Открыть%20заявку](http://192.168.40.5/orders/${data.id})`;
+  const space = "%20";
+  const br = "%0a";
 
   // Создание заявки
   if (type === 1) {
-    text = `*Здравствуйте*%0aК%20вам%20поступила%20новая%20заявка%20*№%20${data.id}*%0aТема:%20*${data.subject}*%0a${checkStatus}%0a${button}`;
+    text = `*Здравствуйте*%0aК%20вам%20поступила%20новая%20заявка%20*№%20${data.id}*%0aТема:%20*${data.subject}*${br}Тип:${space}*${data.spec}*%0a${checkStatus}%0a${button}`;
 
     return text;
   } else if (type === 2) {
