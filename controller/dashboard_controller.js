@@ -27,7 +27,7 @@ router.post("/api/get-dashboard-data", async (req, res) => {
       }
 
       const inboxOrders = await pool.query(
-        `select count(*) from orders where task_id = ${getTask.rows[0].id}`
+        `select count(*) from orders where task_id = ${getTask.rows[0].id} and status = 1`
       );
 
       const iAmExecutor = await pool.query(

@@ -1019,7 +1019,11 @@ router.post("/api/add-order-party", async (req, res) => {
       where op.order_id = ${orderId}
     `);
 
-    return res.status(200).json(getNewOrderParty.rows);
+    return res.status(200).json({
+      data: getNewOrderParty.rows,
+      message: "success",
+      type: "success",
+    });
   } catch (e) {
     res.status(500).json({ message: e.message, type: "danger" });
   }
